@@ -16,6 +16,17 @@ let keystrokes = 0;
 let mistakes = 0;
 
 document.addEventListener("keydown", (e) => {
+  
+  if (e.key === "Backspace") {
+    if (current === 0 || current >= text.length) return;
+    e.preventDefault();
+    spans[current].classList.remove("current");
+    current--;
+    spans[current].classList.remove("correct", "incorrect");
+    spans[current].classList.add("current");
+    return;
+  }
+
   if (e.ctrlKey || e.metaKey) return;
   if (e.key.length !== 1) return;
   if (current >= text.length) return;
@@ -51,3 +62,20 @@ function finish() {
   document.getElementById("stats").textContent = 
   `${wpm} WPM · ${accuracy}% accuracy`;
 }
+
+const restartBtn = document.getElementById("restart");
+
+function restart() {
+  spans.forEach(s => s.classList.remove("correct", "incorrect", "current"));
+  current = 0;
+  startTime = null;
+  keystrokes = 0;
+  mistakes = 0;
+  document.getElementById("stats").textContent = "";
+  spans[current].classList.add("current");
+}
+
+restartBtn.addEventListener("click", () => {
+  restart();
+  restartBtn.blur();   // so pressing Enter later doesn't click it again
+});
