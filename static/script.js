@@ -14,6 +14,7 @@ spans[current].classList.add("current");
 let startTime = null;
 let keystrokes = 0;
 let mistakes = 0;
+let timeline = [];
 
 document.addEventListener("keydown", (e) => {
   
@@ -45,7 +46,7 @@ document.addEventListener("keydown", (e) => {
     mistakes++
   }
 
-
+  timeline[current] = performance.now() - startTime;
   current++;
   if (current < text.length) {
     spans[current].classList.add("current");
@@ -61,6 +62,7 @@ function finish() {
 
   document.getElementById("stats").textContent = 
   `${wpm} WPM · ${accuracy}% accuracy`;
+  console.log(timeline);
 }
 
 const restartBtn = document.getElementById("restart");
@@ -71,6 +73,7 @@ function restart() {
   startTime = null;
   keystrokes = 0;
   mistakes = 0;
+  timeline = [];
   document.getElementById("stats").textContent = "";
   spans[current].classList.add("current");
 }
