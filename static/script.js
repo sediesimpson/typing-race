@@ -10,6 +10,9 @@ let startTime = null;
 let keystrokes = 0;
 let mistakes = 0;
 let timeline = [];
+let ghost = null;       // best run's timeline, or null if there isn't one yet
+let ghostIdx = 0;       // how many characters the ghost has typed
+let ghostFrame = null;  // id of the running animation loop
 
 // ---------- Load a passage from the backend ----------
 
@@ -27,13 +30,36 @@ async function loadPassage() {
   });
   spans = passageEl.querySelectorAll("span");
 
+  await loadGhost();
   restart();
+}
+
+async function loadGhost() {
+  const res = await fetch(`/runs/best?passage_id=${passageId}`);
+  const best = await res.json();
+  ghost = best ? best.timeline : null;
+}
+
+function showGhost() {
+  document.querySelector(".ghost")?.classList.remove("ghost");
+  if (ghost && ghostIdx < spans.length) spans[ghostIdx].classList.add("ghost");
+}
+
+function tickGhost() {
+  const elapsed = performance.now() - startTime;
+  while (ghostIdx < ghost.length && ghost[ghostIdx] <= elapsed) ghostIdx++;
+  showGhost();
+
+  // keep going until the ghost finishes or you do
+  if (ghostIdx < ghost.length && current < text.length) {
+    ghostFrame = requestAnimationFrame(tickGhost);
+  }
 }
 
 // ---------- Reset for a new attempt ----------
 
 function restart() {
-  spans.forEach(s => s.classList.remove("correct", "incorrect", "current"));
+  spans.forEach(s => s.classList.remove("correct", "incorrect", "current", "ghost"));
   current = 0;
   startTime = null;
   keystrokes = 0;
@@ -41,6 +67,10 @@ function restart() {
   timeline = [];
   statsEl.textContent = "";
   spans[current].classList.add("current");
+
+  cancelAnimationFrame(ghostFrame);   // stop any loop from the last attempt
+  ghostIdx = 0;
+  showGhost();                        // park the ghost at the start
 }
 
 // ---------- Typing ----------
@@ -62,7 +92,10 @@ document.addEventListener("keydown", (e) => {
   if (current >= text.length) return;     // finished, or passage not loaded yet
   e.preventDefault();
 
-  if (startTime === null) startTime = performance.now();
+  if (startTime === null) {
+    startTime = performance.now();
+    if (ghost) ghostFrame = requestAnimationFrame(tickGhost);
+  }
 
   keystrokes++;
   const span = spans[current];
@@ -103,6 +136,7 @@ async function finish() {
     });
     if (!res.ok) throw new Error(await res.text());
     statsEl.textContent = `${result} · saved ✓`;
+    await loadGhost();
   } catch (err) {
     console.error("Saving failed:", err);
     statsEl.textContent = `${result} · couldn't save`;
