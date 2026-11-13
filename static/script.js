@@ -1,23 +1,53 @@
-const text = "The quick brown fox jumps over the lazy dog.";
 const passageEl = document.getElementById("passage");
+const statsEl = document.getElementById("stats");
+const restartBtn = document.getElementById("restart");
 
-text.split("").forEach(ch => {
-  const span = document.createElement("span");
-  span.textContent = ch;
-  passageEl.appendChild(span);
-});
-
-const spans = passageEl.querySelectorAll("span");
+let passageId = null;
+let text = "";          // empty until the passage loads
+let spans = [];
 let current = 0;
-spans[current].classList.add("current");
-
 let startTime = null;
 let keystrokes = 0;
 let mistakes = 0;
 let timeline = [];
 
+// ---------- Load a passage from the backend ----------
+
+async function loadPassage() {
+  const res = await fetch("/passages/random");
+  const passage = await res.json();
+  passageId = passage.id;
+  text = passage.text;
+
+  passageEl.innerHTML = "";               // clear any old passage
+  text.split("").forEach(ch => {
+    const span = document.createElement("span");
+    span.textContent = ch;
+    passageEl.appendChild(span);
+  });
+  spans = passageEl.querySelectorAll("span");
+
+  restart();
+}
+
+// ---------- Reset for a new attempt ----------
+
+function restart() {
+  spans.forEach(s => s.classList.remove("correct", "incorrect", "current"));
+  current = 0;
+  startTime = null;
+  keystrokes = 0;
+  mistakes = 0;
+  timeline = [];
+  statsEl.textContent = "";
+  spans[current].classList.add("current");
+}
+
+// ---------- Typing ----------
+
 document.addEventListener("keydown", (e) => {
-  
+  if (e.ctrlKey || e.metaKey) return;
+
   if (e.key === "Backspace") {
     if (current === 0 || current >= text.length) return;
     e.preventDefault();
@@ -28,9 +58,8 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  if (e.ctrlKey || e.metaKey) return;
   if (e.key.length !== 1) return;
-  if (current >= text.length) return;
+  if (current >= text.length) return;     // finished, or passage not loaded yet
   e.preventDefault();
 
   if (startTime === null) startTime = performance.now();
@@ -39,46 +68,52 @@ document.addEventListener("keydown", (e) => {
   const span = spans[current];
   span.classList.remove("current");
 
-  if (e.key == text[current]) {
+  if (e.key === text[current]) {
     span.classList.add("correct");
   } else {
     span.classList.add("incorrect");
-    mistakes++
+    mistakes++;
   }
 
   timeline[current] = performance.now() - startTime;
   current++;
+
   if (current < text.length) {
     spans[current].classList.add("current");
   } else {
-    finish()
+    finish();
   }
 });
 
-function finish() {
+// ---------- Finish and save ----------
+
+async function finish() {
   const minutes = (performance.now() - startTime) / 60000;
   const wpm = Math.round((text.length / 5) / minutes);
-  const accuracy = Math.round(((keystrokes -  mistakes) / keystrokes) *100)
+  const accuracy = Math.round(((keystrokes - mistakes) / keystrokes) * 100);
+  const result = `${wpm} WPM · ${accuracy}% accuracy`;
 
-  document.getElementById("stats").textContent = 
-  `${wpm} WPM · ${accuracy}% accuracy`;
-  console.log(timeline);
+  statsEl.textContent = `${result} · saving…`;
+
+  try {
+    const res = await fetch("/runs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passage_id: passageId, wpm, accuracy, timeline }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    statsEl.textContent = `${result} · saved ✓`;
+  } catch (err) {
+    console.error("Saving failed:", err);
+    statsEl.textContent = `${result} · couldn't save`;
+  }
 }
 
-const restartBtn = document.getElementById("restart");
-
-function restart() {
-  spans.forEach(s => s.classList.remove("correct", "incorrect", "current"));
-  current = 0;
-  startTime = null;
-  keystrokes = 0;
-  mistakes = 0;
-  timeline = [];
-  document.getElementById("stats").textContent = "";
-  spans[current].classList.add("current");
-}
+// ---------- Buttons & start-up ----------
 
 restartBtn.addEventListener("click", () => {
   restart();
-  restartBtn.blur();   // so pressing Enter later doesn't click it again
+  restartBtn.blur();
 });
+
+loadPassage();
