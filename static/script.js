@@ -56,6 +56,17 @@ function tickGhost() {
   }
 }
 
+function updateDelta(i) {
+  if (!ghost) return;
+  const deltaEl = document.getElementById("delta");
+  const diff = (timeline[i] - ghost[i]) / 1000;   // seconds; negative = you're faster
+
+  deltaEl.textContent = diff <= 0
+    ? `▲ ${Math.abs(diff).toFixed(1)}s ahead`
+    : `▼ ${diff.toFixed(1)}s behind`;
+  deltaEl.className = diff <= 0 ? "ahead" : "behind";
+}
+
 // ---------- Reset for a new attempt ----------
 
 function restart() {
@@ -70,7 +81,11 @@ function restart() {
 
   cancelAnimationFrame(ghostFrame);   // stop any loop from the last attempt
   ghostIdx = 0;
-  showGhost();                        // park the ghost at the start
+  showGhost();   
+                       // park the ghost at the start
+  document.getElementById("delta").textContent = "";
+  document.getElementById("delta").className = "";
+  document.getElementById("verdict").textContent = "";
 }
 
 // ---------- Typing ----------
@@ -109,6 +124,7 @@ document.addEventListener("keydown", (e) => {
   }
 
   timeline[current] = performance.now() - startTime;
+  updateDelta(current);
   current++;
 
   if (current < text.length) {
@@ -127,6 +143,18 @@ async function finish() {
   const result = `${wpm} WPM · ${accuracy}% accuracy`;
 
   statsEl.textContent = `${result} · saving…`;
+
+  const verdictEl = document.getElementById("verdict");
+  const myTime = timeline[timeline.length - 1];
+
+  if (!ghost) {
+    verdictEl.textContent = "First run on this passage. That's your ghost now 👻";
+  } else {
+    const diff = (ghost[ghost.length - 1] - myTime) / 1000;
+    verdictEl.textContent = diff > 0
+      ? `🏆 New PB! You beat your ghost by ${diff.toFixed(1)}s`
+      : `👻 Your ghost wins by ${Math.abs(diff).toFixed(1)}s`;
+  }
 
   try {
     const res = await fetch("/runs", {
@@ -148,6 +176,12 @@ async function finish() {
 restartBtn.addEventListener("click", () => {
   restart();
   restartBtn.blur();
+});
+
+const newPassageBtn = document.getElementById("new-passage");
+newPassageBtn.addEventListener("click", () => {
+  loadPassage();
+  newPassageBtn.blur();
 });
 
 loadPassage();

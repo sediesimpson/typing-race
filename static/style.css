@@ -7,3 +7,8 @@ body {font-family: sans-serif; max-width: 700px; margin: 60px auto; }
 .current {box-shadow: inset 2px 0 0 #333; }
 .ghost { box-shadow: inset 0 -3px 0 rgba(70, 110, 255, 0.6); }   /* blue underline */
 .current.ghost { box-shadow: inset 2px 0 0 #333, inset 0 -3px 0 rgba(70, 110, 255, 0.6); }
+
+#delta   { font-weight: bold; min-height: 1.2em; }
+.ahead   { color: #2a9d4b; }
+.behind  { color: #d33; }
+#verdict { font-size: 20px; font-weight: bold; }
