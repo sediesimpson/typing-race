@@ -1,18 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="UTF8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Typing Race</title>
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1>Typing Race</h1>
+    <header>
+      <h1>👻 Typing Race</h1>
+      <span id="delta"></span>
+    </header>
+
     <div id="passage"></div>
-    <p id="delta"></p>
-    <p id="stats"></p>
-    <p id="verdict"></p>
-    <button id="restart">Restart</button>
-    <button id="new-passage">New passage</button>
+
+    <section id="results">
+      <p id="stats"></p>
+      <p id="verdict"></p>
+    </section>
+
+    <div class="controls">
+      <button id="restart">Restart</button>
+      <button id="new-passage">New passage</button>
+    </div>
+    <p class="hint">Start typing to begin · <kbd>Tab</kbd> to restart</p>
+
     <script src="script.js"></script>
   </body>
-  </html>
+</html>

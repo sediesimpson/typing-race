@@ -81,8 +81,8 @@ function restart() {
 
   cancelAnimationFrame(ghostFrame);   // stop any loop from the last attempt
   ghostIdx = 0;
-  showGhost();   
-                       // park the ghost at the start
+  showGhost();                        // park the ghost at the start
+  document.body.classList.remove("typing");
   document.getElementById("delta").textContent = "";
   document.getElementById("delta").className = "";
   document.getElementById("verdict").textContent = "";
@@ -92,6 +92,12 @@ function restart() {
 
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey || e.metaKey) return;
+
+  if (e.key === "Tab") {
+    e.preventDefault();
+    restart();
+    return;
+  }
 
   if (e.key === "Backspace") {
     if (current === 0 || current >= text.length) return;
@@ -109,6 +115,7 @@ document.addEventListener("keydown", (e) => {
 
   if (startTime === null) {
     startTime = performance.now();
+    document.body.classList.add("typing");
     if (ghost) ghostFrame = requestAnimationFrame(tickGhost);
   }
 
@@ -141,6 +148,7 @@ async function finish() {
   const wpm = Math.round((text.length / 5) / minutes);
   const accuracy = Math.round(((keystrokes - mistakes) / keystrokes) * 100);
   const result = `${wpm} WPM · ${accuracy}% accuracy`;
+  document.body.classList.remove("typing");
 
   statsEl.textContent = `${result} · saving…`;
 
