@@ -6,10 +6,11 @@ A typing test where you race against a **ghost of your past self**. Every run is
 
 - **Typing test** with live colouring of correct and incorrect characters, plus Backspace support
 - **WPM and accuracy** shown at the end of each run
-- **Ghost replay**: a blue underline replays your best run at its exact pace
+- **Ghost replay**: a blue highlight replays your best run at its exact pace
 - **Live ahead/behind readout** (`▲ 0.8s ahead` / `▼ 1.2s behind`)
-- **Personal bests**: beat your ghost and it becomes your new ghost 🏆
+- **Personal bests**: finish faster than your ghost and it becomes your new ghost 🏆
 - **Random passages**, with a separate ghost for each one
+- **Tab to restart** mid-run or after finishing
 
 ## How the ghost works
 
@@ -32,11 +33,11 @@ The same timeline makes the ahead/behind readout a single subtraction: your time
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/<your-username>/typing-race.git
+git clone https://github.com/sediesimpson/typing-race.git
 cd typing-race
 
 # 2. Create and activate a virtual environment
-python -m venv .venv
+python3 -m venv .venv            # Windows: python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
 # 3. Install dependencies
@@ -58,9 +59,9 @@ FastAPI generates interactive docs at **http://localhost:8000/docs**.
 |---|---|---|
 | `GET` | `/passages/random` | Returns a random passage: `{ id, text }` |
 | `POST` | `/runs` | Saves a finished run: `{ passage_id, wpm, accuracy, timeline }` |
-| `GET` | `/runs/best?passage_id=…` | Returns the fastest run for a passage, or `null` |
+| `GET` | `/runs/best?passage_id=…` | Returns the run with the fastest finish time for a passage, or `null` |
 
-`POST /runs` rejects a run whose timeline length doesn't match the passage.
+`POST /runs` returns `404` for an unknown `passage_id` and `400` for a run whose timeline length doesn't match the passage.
 
 ## Project structure
 

@@ -78,7 +78,10 @@ def save_run(run: RunIn):
 def best_run(passage_id: int):
     with get_db() as conn:
         row = conn.execute(
-            "SELECT * FROM runs WHERE passage_id = ? ORDER BY wpm DESC LIMIT 1",
+            # Fastest finish time = the last value in the timeline.
+            # (Ordering by rounded WPM would let near-ties pick the wrong ghost.)
+            "SELECT * FROM runs WHERE passage_id = ? "
+            "ORDER BY json_extract(timeline, '$[#-1]') ASC LIMIT 1",
             (passage_id,),
         ).fetchone()
     if row is None:

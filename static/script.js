@@ -70,6 +70,7 @@ function updateDelta(i) {
 // ---------- Reset for a new attempt ----------
 
 function restart() {
+  if (!spans.length) return;   // passage hasn't loaded yet
   spans.forEach(s => s.classList.remove("correct", "incorrect", "current", "ghost"));
   current = 0;
   startTime = null;
@@ -93,11 +94,19 @@ function restart() {
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey || e.metaKey) return;
 
+  const onButton = e.target.tagName === "BUTTON";
+
+  // Tab restarts once a run has started; otherwise it moves focus as usual,
+  // so keyboard users can still reach the buttons.
   if (e.key === "Tab") {
-    e.preventDefault();
-    restart();
+    if (startTime !== null && !onButton) {
+      e.preventDefault();
+      restart();
+    }
     return;
   }
+
+  if (e.key === " " && onButton) return;   // let Space press the focused button
 
   if (e.key === "Backspace") {
     if (current === 0 || current >= text.length) return;
